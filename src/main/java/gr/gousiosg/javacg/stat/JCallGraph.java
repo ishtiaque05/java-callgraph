@@ -31,6 +31,8 @@ package gr.gousiosg.javacg.stat;
 import java.io.File;
 import java.io.IOException;
 import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -39,11 +41,14 @@ import org.apache.bcel.classfile.ClassParser;
 /**
  * Constructs a callgraph out of a set of directories, classes and JAR archives.
  * Can combine multiple archives into a single call graph.
- * 
+ *
  * @author Georgios Gousios <gousiosg@gmail.com>
- * 
+ *
  */
 public class JCallGraph {
+
+    public static Set<String> visitedClasses = new HashSet<>();
+    public static Set<String> calledClasses  = new HashSet<>();
 
     public static void processClass(String class_name) throws IOException {
         ClassParser cp = new ClassParser(class_name);
@@ -97,5 +102,12 @@ public class JCallGraph {
         for (String arg : args) {
             processFile(new File(arg));
         }
+
+        for (String calledClass : calledClasses) {
+            if (!visitedClasses.contains(calledClass)) {
+                System.out.println("Warning: called class not found: " + calledClass);
+            }
+        }
+
     }
 }
