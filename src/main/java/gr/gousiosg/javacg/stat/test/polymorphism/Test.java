@@ -26,7 +26,7 @@ public class Test {
         ClassB cb = new ClassB();
         cb.methodA(); // called B
         // Test 3
-        ClassE ce = new ClassE();
+        ClassB ce = new ClassE();
         ce.methodB(); // called ClassE
         // Test 4
         ti = new ClassC();

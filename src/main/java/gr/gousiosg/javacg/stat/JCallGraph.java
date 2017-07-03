@@ -37,6 +37,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 import org.apache.bcel.classfile.ClassParser;
+import org.apache.bcel.classfile.JavaClass;
 
 /**
  * Constructs a callgraph out of a set of directories, classes and JAR archives.
@@ -48,7 +49,23 @@ import org.apache.bcel.classfile.ClassParser;
 public class JCallGraph {
 
     public static Set<String> visitedClasses = new HashSet<>();
-    public static Set<String> calledClasses  = new HashSet<>();
+    public static Set<String> referencedClasses  = new HashSet<>();
+
+    public static void addVisitedClass(JavaClass jc) {
+        if (!visitedClasses.contains(jc.getClassName())) {
+            visitedClasses.add(jc.getClassName());
+        }
+    }
+
+    public static void addReferencedClass(String classname) {
+        if (!JCallGraph.referencedClasses.contains(classname)) {
+            JCallGraph.referencedClasses.add(classname);
+        }
+    }
+
+    public static void addVisitedMethod(String method) {
+        // TODO - add method w/ signature.
+    }
 
     public static void processClass(String class_name) throws IOException {
         ClassParser cp = new ClassParser(class_name);
@@ -103,11 +120,12 @@ public class JCallGraph {
             processFile(new File(arg));
         }
 
-        for (String calledClass : calledClasses) {
+        for (String calledClass : referencedClasses) {
             if (!visitedClasses.contains(calledClass)) {
                 System.out.println("Warning: called class not found: " + calledClass);
             }
         }
-
+        // TODO - go through visited classes. Depth-first, check if there is any
+        // overriden method. If so, add an additional edge (possible tag).
     }
 }

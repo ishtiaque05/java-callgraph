@@ -13,6 +13,6 @@ public class ClassE extends ClassB {
 
     @Override
     public void methodB() {
-        System.out.println("B");
+        System.out.println("E");
     }
 }

@@ -50,9 +50,7 @@ public class ClassVisitor extends EmptyVisitor {
         clazz = jc;
         constants = new ConstantPoolGen(clazz.getConstantPool());
         classReferenceFormat = "C:" + clazz.getClassName() + " %s";
-        if (!JCallGraph.visitedClasses.contains(jc.getClassName())) {
-            JCallGraph.visitedClasses.add(jc.getClassName());
-        }
+        JCallGraph.addVisitedClass(jc);
     }
 
     public void visitJavaClass(JavaClass jc) {
@@ -70,9 +68,7 @@ public class ClassVisitor extends EmptyVisitor {
             if (constant.getTag() == 7) {
                 String referencedClass = 
                     constantPool.constantToString(constant);
-                if (!JCallGraph.calledClasses.contains(referencedClass)) {
-                    JCallGraph.calledClasses.add(referencedClass);
-                }
+                JCallGraph.addReferencedClass(referencedClass);
                 System.out.println(String.format(classReferenceFormat,
                         referencedClass));
             }
