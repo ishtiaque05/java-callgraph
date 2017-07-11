@@ -48,7 +48,7 @@ public class MethodCall {
     }
     
     public String getCallSignature(String refType) {
-        return String.format("M:%s:%s(%s):%d -> %s:%s(%s)", 
+        return String.format("M:%s:%s(%s):%d [X] %s:%s(%s)",
                 jc.getClassName(),
                 mg.getName(),
                 MethodVisitor.argumentList(mg.getArgumentTypes()),

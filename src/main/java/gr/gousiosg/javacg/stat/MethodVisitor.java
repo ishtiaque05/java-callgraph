@@ -58,7 +58,7 @@ public class MethodVisitor extends EmptyVisitor {
         mg = m;
         cp = mg.getConstantPool();
         format = "M:" + visitedClass.getClassName() + ":" + mg.getName() + "(" + argumentList(mg.getArgumentTypes()) + "):%d"
-            + " " + "(%s)%s:%s(%s)";
+            + " " + " [%s] %s:%s(%s)";
         bci = 0;
         nbci = 0;
     }
@@ -88,8 +88,6 @@ public class MethodVisitor extends EmptyVisitor {
 
     private boolean visitInstruction(Instruction i) {
         short opcode = i.getOpcode();
-        bci = nbci;
-        nbci += i.getLength();
         return ((InstructionConst.getInstruction(opcode) != null)
                 && !(i instanceof ConstantPushInstruction)
                 && !(i instanceof ReturnInstruction));
@@ -98,7 +96,7 @@ public class MethodVisitor extends EmptyVisitor {
     private void prepareCall(JavaClass caller, ReferenceType callee, InvokeInstruction i) {
         String callerClassName = caller.getClassName();
         String calleeClassName = callee.toString();
-        MethodCall call = new MethodCall(caller, callee, i, cp, mg, bci);
+        MethodCall call = new MethodCall(caller, callee, i, cp, mg);
         if (!JCallGraph.calls.containsKey(callerClassName)) {
             JCallGraph.calls.put(callerClassName, new HashMap<>());
         }
