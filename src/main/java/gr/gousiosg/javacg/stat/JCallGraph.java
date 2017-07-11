@@ -30,8 +30,13 @@ package gr.gousiosg.javacg.stat;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -49,7 +54,12 @@ import org.apache.bcel.classfile.JavaClass;
 public class JCallGraph {
 
     public static Set<String> visitedClasses = new HashSet<>();
+
+    // TODO - could this go away? We have calls, it should be enough.
     public static Set<String> referencedClasses  = new HashSet<>();
+
+    // <caller, <callee, <method signature>>>
+    public static Map<String, Map<String, List<MethodCall>>> calls = new HashMap<>();
 
     public static void addVisitedClass(JavaClass jc) {
         if (!visitedClasses.contains(jc.getClassName())) {
@@ -115,6 +125,16 @@ public class JCallGraph {
         }
     }
 
+    public static boolean containsMethod(Class clazz, String method) {
+        for (Method m : clazz.getMethods()) {
+            // TODO - check for signatures!
+            if (m.getName().equals(method)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static void main(String[] args) {
         for (String arg : args) {
             processFile(new File(arg));
@@ -125,7 +145,32 @@ public class JCallGraph {
                 System.out.println("Warning: called class not found: " + calledClass);
             }
         }
-        // TODO - go through visited classes. Depth-first, check if there is any
-        // overriden method. If so, add an additional edge (possible tag).
+
+        for (Entry<String, Map<String, List<MethodCall>>> call : calls.entrySet()) {
+            String caller = call.getKey();
+            Map<String, List<MethodCall>> callee = call.getValue();
+            for (Entry<String, List<MethodCall>> reference : callee.entrySet()) {
+                for (String visited : visitedClasses) {
+                    try {
+                        if (reference.getKey().equals(visited)) {
+                            continue;
+                        }
+
+                        Class visitedClass = Class.forName(visited);
+                        Class calledClass = Class.forName(reference.getKey());
+                        if (calledClass.isAssignableFrom(visitedClass)) {
+                            for (MethodCall methodCall : reference.getValue()) {
+                                if (containsMethod(visitedClass, methodCall.getMethodName())) {
+                                    System.out.println(methodCall.getCallSignature(visited));
+                                }
+                            }
+                        }
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
     }
 }

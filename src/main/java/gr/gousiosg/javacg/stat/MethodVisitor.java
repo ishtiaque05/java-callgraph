@@ -28,13 +28,15 @@
 
 package gr.gousiosg.javacg.stat;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.generic.*;
 
 /**
  * The simplest of method visitors, prints any invoked method
  * signature for all method invocations.
- * 
+ *
  * Class copied with modifications from CJKM: http://www.spinellis.gr/sw/ckjm/
  */
 public class MethodVisitor extends EmptyVisitor {
@@ -52,7 +54,7 @@ public class MethodVisitor extends EmptyVisitor {
             + " " + "(%s)%s:%s(%s)";
     }
 
-    private String argumentList(Type[] arguments) {
+    public static String argumentList(Type[] arguments) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < arguments.length; i++) {
             if (i != 0) {
@@ -66,10 +68,10 @@ public class MethodVisitor extends EmptyVisitor {
     public void start() {
         if (mg.isAbstract() || mg.isNative())
             return;
-        for (InstructionHandle ih = mg.getInstructionList().getStart(); 
+        for (InstructionHandle ih = mg.getInstructionList().getStart();
                 ih != null; ih = ih.getNext()) {
             Instruction i = ih.getInstruction();
-            
+
             if (!visitInstruction(i))
                 i.accept(this);
         }
@@ -78,32 +80,54 @@ public class MethodVisitor extends EmptyVisitor {
     private boolean visitInstruction(Instruction i) {
         short opcode = i.getOpcode();
         return ((InstructionConst.getInstruction(opcode) != null)
-                && !(i instanceof ConstantPushInstruction) 
+                && !(i instanceof ConstantPushInstruction)
                 && !(i instanceof ReturnInstruction));
+    }
+
+    private void prepareCall(JavaClass caller, ReferenceType callee, InvokeInstruction i) {
+        String callerClassName = caller.getClassName();
+        String calleeClassName = callee.toString();
+        MethodCall call = new MethodCall(caller, callee, i, cp, mg);
+        if (!JCallGraph.calls.containsKey(callerClassName)) {
+            JCallGraph.calls.put(callerClassName, new HashMap<>());
+        }
+
+        if (!JCallGraph.calls.get(callerClassName).containsKey(calleeClassName)) {
+            JCallGraph.calls.get(callerClassName).put(calleeClassName, new ArrayList<>());
+        }
+
+        if (!JCallGraph.calls.get(callerClassName).get(calleeClassName).contains(call)) {
+            JCallGraph.calls.get(callerClassName).get(calleeClassName).add(call);
+        }
     }
 
     @Override
     public void visitINVOKEVIRTUAL(INVOKEVIRTUAL i) {
+        prepareCall(visitedClass, i.getReferenceType(cp), i);
         System.out.println(String.format(format,i.getIndex(),"M",i.getReferenceType(cp),i.getMethodName(cp),argumentList(i.getArgumentTypes(cp))));
     }
 
     @Override
     public void visitINVOKEINTERFACE(INVOKEINTERFACE i) {
+        prepareCall(visitedClass, i.getReferenceType(cp), i);
         System.out.println(String.format(format,i.getIndex(),"I",i.getReferenceType(cp),i.getMethodName(cp),argumentList(i.getArgumentTypes(cp))));
     }
 
     @Override
     public void visitINVOKESPECIAL(INVOKESPECIAL i) {
+        // Note: I don't need to handle these calls. They are always resolved at compile time.
         System.out.println(String.format(format,i.getIndex(),"O",i.getReferenceType(cp),i.getMethodName(cp),argumentList(i.getArgumentTypes(cp))));
     }
 
     @Override
     public void visitINVOKESTATIC(INVOKESTATIC i) {
+        prepareCall(visitedClass, i.getReferenceType(cp), i);
         System.out.println(String.format(format,i.getIndex(),"S",i.getReferenceType(cp),i.getMethodName(cp),argumentList(i.getArgumentTypes(cp))));
     }
 
     @Override
     public void visitINVOKEDYNAMIC(INVOKEDYNAMIC i) {
+        prepareCall(visitedClass, i.getReferenceType(cp), i);
         System.out.println(String.format(format,i.getIndex(),"D",i.getType(cp),i.getMethodName(cp),
                 argumentList(i.getArgumentTypes(cp))));
     }

@@ -2,9 +2,6 @@
 
 import sys
 
-# TODO - we still do not solve polimorphism
-# TODO - we still do not solve missing classes -> must be done inside java
-
 # Dictionary of caller -> callee
 callgraph = {}
 
