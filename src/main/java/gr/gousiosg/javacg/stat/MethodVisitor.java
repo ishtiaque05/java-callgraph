@@ -88,6 +88,8 @@ public class MethodVisitor extends EmptyVisitor {
 
     private boolean visitInstruction(Instruction i) {
         short opcode = i.getOpcode();
+        bci = nbci;
+        nbci += i.getLength();
         return ((InstructionConst.getInstruction(opcode) != null)
                 && !(i instanceof ConstantPushInstruction)
                 && !(i instanceof ReturnInstruction));
@@ -96,7 +98,7 @@ public class MethodVisitor extends EmptyVisitor {
     private void prepareCall(JavaClass caller, ReferenceType callee, InvokeInstruction i) {
         String callerClassName = caller.getClassName();
         String calleeClassName = callee.toString();
-        MethodCall call = new MethodCall(caller, callee, i, cp, mg);
+        MethodCall call = new MethodCall(caller, callee, i, cp, mg, bci);
         if (!JCallGraph.calls.containsKey(callerClassName)) {
             JCallGraph.calls.put(callerClassName, new HashMap<>());
         }
