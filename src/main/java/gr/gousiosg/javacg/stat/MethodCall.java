@@ -27,13 +27,16 @@ public class MethodCall {
     ConstantPoolGen cp;
     // Method where the call is performed (caller)
     MethodGen mg;
+    // Byte code index of this call.
+    int bci;
     
-    public MethodCall(JavaClass jc, ReferenceType refType, InvokeInstruction inst, ConstantPoolGen cp, MethodGen mg) {
+    public MethodCall(JavaClass jc, ReferenceType refType, InvokeInstruction inst, ConstantPoolGen cp, MethodGen mg, int bci) {
         this.jc = jc;
         this.refType = refType;
         this.inst = inst;
         this.cp = cp;
         this.mg = mg;
+        this.bci = bci;
     }
     
     public String getMethodName() {
@@ -49,7 +52,7 @@ public class MethodCall {
                 jc.getClassName(),
                 mg.getName(),
                 MethodVisitor.argumentList(mg.getArgumentTypes()),
-                inst.getIndex(),
+                bci,
                 refType,
                 inst.getMethodName(cp),
                 argumentList(inst.getArgumentTypes(cp)));

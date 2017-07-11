@@ -45,6 +45,13 @@ public class MethodVisitor extends EmptyVisitor {
     private MethodGen mg;
     private ConstantPoolGen cp;
     private String format;
+    // BCI for current instruction.
+    private int bci;
+    // BCI for the next instruction.
+    private int nbci;
+
+    // TODO - I can visit news
+    // TODO - could I see if these news escape the method?
 
     public MethodVisitor(MethodGen m, JavaClass jc) {
         visitedClass = jc;
@@ -52,6 +59,8 @@ public class MethodVisitor extends EmptyVisitor {
         cp = mg.getConstantPool();
         format = "M:" + visitedClass.getClassName() + ":" + mg.getName() + "(" + argumentList(mg.getArgumentTypes()) + "):%d"
             + " " + "(%s)%s:%s(%s)";
+        bci = 0;
+        nbci = 0;
     }
 
     public static String argumentList(Type[] arguments) {
@@ -79,6 +88,8 @@ public class MethodVisitor extends EmptyVisitor {
 
     private boolean visitInstruction(Instruction i) {
         short opcode = i.getOpcode();
+        bci = nbci;
+        nbci += i.getLength();
         return ((InstructionConst.getInstruction(opcode) != null)
                 && !(i instanceof ConstantPushInstruction)
                 && !(i instanceof ReturnInstruction));
@@ -87,7 +98,7 @@ public class MethodVisitor extends EmptyVisitor {
     private void prepareCall(JavaClass caller, ReferenceType callee, InvokeInstruction i) {
         String callerClassName = caller.getClassName();
         String calleeClassName = callee.toString();
-        MethodCall call = new MethodCall(caller, callee, i, cp, mg);
+        MethodCall call = new MethodCall(caller, callee, i, cp, mg, bci);
         if (!JCallGraph.calls.containsKey(callerClassName)) {
             JCallGraph.calls.put(callerClassName, new HashMap<>());
         }
@@ -104,31 +115,31 @@ public class MethodVisitor extends EmptyVisitor {
     @Override
     public void visitINVOKEVIRTUAL(INVOKEVIRTUAL i) {
         prepareCall(visitedClass, i.getReferenceType(cp), i);
-        System.out.println(String.format(format,i.getIndex(),"M",i.getReferenceType(cp),i.getMethodName(cp),argumentList(i.getArgumentTypes(cp))));
+        System.out.println(String.format(format,bci,"M",i.getReferenceType(cp),i.getMethodName(cp),argumentList(i.getArgumentTypes(cp))));
     }
 
     @Override
     public void visitINVOKEINTERFACE(INVOKEINTERFACE i) {
         prepareCall(visitedClass, i.getReferenceType(cp), i);
-        System.out.println(String.format(format,i.getIndex(),"I",i.getReferenceType(cp),i.getMethodName(cp),argumentList(i.getArgumentTypes(cp))));
+        System.out.println(String.format(format,bci,"I",i.getReferenceType(cp),i.getMethodName(cp),argumentList(i.getArgumentTypes(cp))));
     }
 
     @Override
     public void visitINVOKESPECIAL(INVOKESPECIAL i) {
         // Note: I don't need to handle these calls. They are always resolved at compile time.
-        System.out.println(String.format(format,i.getIndex(),"O",i.getReferenceType(cp),i.getMethodName(cp),argumentList(i.getArgumentTypes(cp))));
+        System.out.println(String.format(format,bci,"O",i.getReferenceType(cp),i.getMethodName(cp),argumentList(i.getArgumentTypes(cp))));
     }
 
     @Override
     public void visitINVOKESTATIC(INVOKESTATIC i) {
         prepareCall(visitedClass, i.getReferenceType(cp), i);
-        System.out.println(String.format(format,i.getIndex(),"S",i.getReferenceType(cp),i.getMethodName(cp),argumentList(i.getArgumentTypes(cp))));
+        System.out.println(String.format(format,bci,"S",i.getReferenceType(cp),i.getMethodName(cp),argumentList(i.getArgumentTypes(cp))));
     }
 
     @Override
     public void visitINVOKEDYNAMIC(INVOKEDYNAMIC i) {
         prepareCall(visitedClass, i.getReferenceType(cp), i);
-        System.out.println(String.format(format,i.getIndex(),"D",i.getType(cp),i.getMethodName(cp),
+        System.out.println(String.format(format,bci,"D",i.getType(cp),i.getMethodName(cp),
                 argumentList(i.getArgumentTypes(cp))));
     }
 }
