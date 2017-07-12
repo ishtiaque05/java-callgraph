@@ -73,10 +73,6 @@ public class JCallGraph {
         }
     }
 
-    public static void addVisitedMethod(String method) {
-        // TODO - add method w/ signature.
-    }
-
     public static void processClass(String class_name) throws IOException {
         ClassParser cp = new ClassParser(class_name);
         ClassVisitor visitor = new ClassVisitor(cp.parse());
@@ -135,6 +131,22 @@ public class JCallGraph {
         return false;
     }
 
+    public static boolean isPrimitive(String type) {
+        switch(type) {
+            case "byte":
+            case "short":
+            case "int":
+            case "long":
+            case "float":
+            case "double":
+            case "boolean":
+            case "char":
+                return true;
+            default:
+                return false;
+        }
+    }
+
     public static void main(String[] args) {
         for (String arg : args) {
             processFile(new File(arg));
@@ -151,12 +163,18 @@ public class JCallGraph {
             for (Entry<String, List<MethodCall>> reference : callee.entrySet()) {
                 for (String visited : visitedClasses) {
                     try {
-                        if (reference.getKey().equals(visited)) {
+                        String refType = reference.getKey().replace("[]", "");
+
+                        if (isPrimitive(refType)) {
+                            continue;
+                        }
+
+                        if (refType.equals(visited)) {
                             continue;
                         }
 
                         Class visitedClass = Class.forName(visited);
-                        Class calledClass = Class.forName(reference.getKey());
+                        Class calledClass = Class.forName(refType);
                         if (calledClass.isAssignableFrom(visitedClass)) {
                             for (MethodCall methodCall : reference.getValue()) {
                                 if (containsMethod(visitedClass, methodCall.getMethodName())) {
