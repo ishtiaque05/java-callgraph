@@ -126,7 +126,7 @@ public class JCallGraph {
     }
 
     public static boolean containsMethod(Class clazz, String method) {
-        for (Method m : clazz.getMethods()) {
+        for (Method m : clazz.getDeclaredMethods()) {
             // TODO - check for signatures!
             if (m.getName().equals(method)) {
                 return true;
@@ -147,7 +147,6 @@ public class JCallGraph {
         }
 
         for (Entry<String, Map<String, List<MethodCall>>> call : calls.entrySet()) {
-            String caller = call.getKey();
             Map<String, List<MethodCall>> callee = call.getValue();
             for (Entry<String, List<MethodCall>> reference : callee.entrySet()) {
                 for (String visited : visitedClasses) {

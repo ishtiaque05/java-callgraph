@@ -50,15 +50,14 @@ public class MethodVisitor extends EmptyVisitor {
     // BCI for the next instruction.
     private int nbci;
 
-    // TODO - I can visit news
     // TODO - could I see if these news escape the method?
 
     public MethodVisitor(MethodGen m, JavaClass jc) {
         visitedClass = jc;
         mg = m;
         cp = mg.getConstantPool();
-        format = "M:" + visitedClass.getClassName() + ":" + mg.getName() + "(" + argumentList(mg.getArgumentTypes()) + "):%d"
-            + " " + " [%s] %s:%s(%s)";
+        format = "M:" + visitedClass.getClassName() + ":" + mg.getName() + "(" + argumentList(mg.getArgumentTypes()) + ")#%d"
+            + " [%s] %s:%s(%s)";
         bci = 0;
         nbci = 0;
     }
@@ -110,6 +109,16 @@ public class MethodVisitor extends EmptyVisitor {
         if (!JCallGraph.calls.get(callerClassName).get(calleeClassName).contains(call)) {
             JCallGraph.calls.get(callerClassName).get(calleeClassName).add(call);
         }
+    }
+
+    @Override
+    public void visitNEW(NEW o) {
+        System.out.println("Object allocation at " + bci);
+    }
+
+    @Override
+    public void visitNEWARRAY(NEWARRAY obj) {
+        System.out.println("Array allocation at " + bci);
     }
 
     @Override

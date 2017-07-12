@@ -13,6 +13,7 @@ public class ClassB implements TestInterface {
 
     @Override
     public void methodA() {
+        methodB();
         System.out.println("A");
     }
 
