@@ -44,7 +44,8 @@ public class MethodVisitor extends EmptyVisitor {
     JavaClass visitedClass;
     private MethodGen mg;
     private ConstantPoolGen cp;
-    private String format;
+    private String callformat;
+    private String allocformat;
     // BCI for current instruction.
     private int bci;
     // BCI for the next instruction.
@@ -56,8 +57,9 @@ public class MethodVisitor extends EmptyVisitor {
         visitedClass = jc;
         mg = m;
         cp = mg.getConstantPool();
-        format = "M:" + visitedClass.getClassName() + ":" + mg.getName() + "(" + argumentList(mg.getArgumentTypes()) + ")#%d"
+        callformat = "M:" + visitedClass.getClassName() + ":" + mg.getName() + "(" + argumentList(mg.getArgumentTypes()) + ")#%d"
             + " [%s] %s:%s(%s)";
+        allocformat = "%s:" + visitedClass.getClassName() + ":" + mg.getName() + "(" + argumentList(mg.getArgumentTypes()) + ")#%d";
         bci = 0;
         nbci = 0;
     }
@@ -113,42 +115,42 @@ public class MethodVisitor extends EmptyVisitor {
 
     @Override
     public void visitNEW(NEW o) {
-        System.out.println("Object allocation at " + bci);
+        System.out.println(String.format(allocformat, "N", bci));
     }
 
     @Override
     public void visitNEWARRAY(NEWARRAY obj) {
-        System.out.println("Array allocation at " + bci);
+        System.out.println(String.format(allocformat, "NA", bci));
     }
 
     @Override
     public void visitINVOKEVIRTUAL(INVOKEVIRTUAL i) {
         prepareCall(visitedClass, i.getReferenceType(cp), i);
-        System.out.println(String.format(format,bci,"M",i.getReferenceType(cp),i.getMethodName(cp),argumentList(i.getArgumentTypes(cp))));
+        System.out.println(String.format(callformat,bci,"M",i.getReferenceType(cp),i.getMethodName(cp),argumentList(i.getArgumentTypes(cp))));
     }
 
     @Override
     public void visitINVOKEINTERFACE(INVOKEINTERFACE i) {
         prepareCall(visitedClass, i.getReferenceType(cp), i);
-        System.out.println(String.format(format,bci,"I",i.getReferenceType(cp),i.getMethodName(cp),argumentList(i.getArgumentTypes(cp))));
+        System.out.println(String.format(callformat,bci,"I",i.getReferenceType(cp),i.getMethodName(cp),argumentList(i.getArgumentTypes(cp))));
     }
 
     @Override
     public void visitINVOKESPECIAL(INVOKESPECIAL i) {
         // Note: I don't need to handle these calls. They are always resolved at compile time.
-        System.out.println(String.format(format,bci,"O",i.getReferenceType(cp),i.getMethodName(cp),argumentList(i.getArgumentTypes(cp))));
+        System.out.println(String.format(callformat,bci,"O",i.getReferenceType(cp),i.getMethodName(cp),argumentList(i.getArgumentTypes(cp))));
     }
 
     @Override
     public void visitINVOKESTATIC(INVOKESTATIC i) {
         prepareCall(visitedClass, i.getReferenceType(cp), i);
-        System.out.println(String.format(format,bci,"S",i.getReferenceType(cp),i.getMethodName(cp),argumentList(i.getArgumentTypes(cp))));
+        System.out.println(String.format(callformat,bci,"S",i.getReferenceType(cp),i.getMethodName(cp),argumentList(i.getArgumentTypes(cp))));
     }
 
     @Override
     public void visitINVOKEDYNAMIC(INVOKEDYNAMIC i) {
         prepareCall(visitedClass, i.getReferenceType(cp), i);
-        System.out.println(String.format(format,bci,"D",i.getType(cp),i.getMethodName(cp),
+        System.out.println(String.format(callformat,bci,"D",i.getType(cp),i.getMethodName(cp),
                 argumentList(i.getArgumentTypes(cp))));
     }
 }

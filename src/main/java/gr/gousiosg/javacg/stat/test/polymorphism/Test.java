@@ -16,8 +16,8 @@ public class Test {
     //  TestClassB, implements mA.
     //      TestClassE
     //  TestClassC, implements mA and mB
-
-    public static void main(String[] args) throws Exception {
+    
+    public static void run() {
         // Test 1
         TestInterface ti = new ClassD();
         ti.methodA(); // called ClassA -> fail
@@ -32,6 +32,9 @@ public class Test {
         ti = new ClassC();
         ti.methodA(); // called ClassC -> fail
         ti.methodB(); // called ClassC -> fail
+    }
 
+    public static void main(String[] args) {
+        run();
     }
 }

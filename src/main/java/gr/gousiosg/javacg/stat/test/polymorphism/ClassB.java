@@ -10,6 +10,8 @@ package gr.gousiosg.javacg.stat.test.polymorphism;
  * @author rbruno
  */
 public class ClassB implements TestInterface {
+    
+    int i = 10;
 
     @Override
     public void methodA() {
@@ -19,6 +21,10 @@ public class ClassB implements TestInterface {
 
     @Override
     public void methodB() {
+        i--;
+        if (i > 0) {
+            methodA();
+        }
         System.out.println("B");
     }
     
