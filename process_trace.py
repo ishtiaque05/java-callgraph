@@ -50,20 +50,19 @@ def findMultiCallers(imap, targets):
 
 # Target is <class>:<method>#<bci>
 # Imap is forward call map
-def findDivergence(imap, stack, target, output):
+def findDivergence(imap, result, stack, target, output):
   values = [] if target not in imap else imap[target]
   if values:
     callers = findMultiCallers(imap, values)
     if len(callers) > 1:
-      print("important= " + str(callers))
+      result.extend(callers)
     for caller in callers:
       if caller in stack:
         continue
       else:
         stack.append(caller)
-        findDivergence(imap, stack, caller, output)
+        findDivergence(imap, result, stack, caller, output)
         stack.pop() 
-
 
 def buildcallmap(caller, callee):
   if caller not in callmap:
@@ -126,8 +125,10 @@ printmap(rcallmap, output_file)
 output_file.close()
 
 # Look in rcallgraph for any key
-#target="gr.gousiosg.javacg.stat.MethodVisitor:prepareCall(org.apache.bcel.classfile.JavaClass,org.apache.bcel.generic.ReferenceType,org.apache.bcel.generic.InvokeInstruction)"
-target="gr.gousiosg.javacg.stat.ClassVisitor:<init>(org.apache.bcel.classfile.JavaClass)"
+# TODO - do it for any allocation!
+target="gr.gousiosg.javacg.stat.MethodVisitor:prepareCall(org.apache.bcel.classfile.JavaClass,org.apache.bcel.generic.ReferenceType,org.apache.bcel.generic.InvokeInstruction)"
+#target="gr.gousiosg.javacg.stat.ClassVisitor:<init>(org.apache.bcel.classfile.JavaClass)"
+
 print("Looking into " + target)
 revers = reverseTraversal({}, [], target, sys.stdout, 1)
 print("Printing reversed map")
@@ -135,6 +136,13 @@ printmap(revers, sys.stdout)
 print("Printing swaped reversed map")
 allocmap = swapmap(revers)
 printmap(allocmap, sys.stdout)
-print(entrypoints(allocmap))
+print("Printing entry points for swapped reverse map")
+result = []
 for entrypoint in entrypoints(allocmap):
-  findDivergence(allocmap, [], entrypoint, sys.stdout)
+# TODO - check if I want to restrict.
+#  if not entrypoint.startswith("gr.gousiosg.javacg.stat.JCallGraph"):
+#    continue
+  print("entrypoint=" + entrypoint)
+  findDivergence(allocmap, result, [], entrypoint, sys.stdout)
+for i in set(result):
+  print("important=" + i)
