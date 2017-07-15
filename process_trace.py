@@ -21,9 +21,10 @@ def reverseTraversal(result, stack, callee, output, depth):
   for caller in callers:
     if caller in stack:
       continue
-    print("d=" + str(depth) + "\t", file=output, end="")
-    for i in range(0, depth): print(" ", end="", file=output)
-    print(caller, file=output)
+# Debug
+#    print("d=" + str(depth) + "\t", file=output, end="")
+#    for i in range(0, depth): print(" ", end="", file=output)
+#    print(caller, file=output)
     if caller not in result[callee]:
       result[callee].append(caller)
     stack.append(caller)
@@ -103,6 +104,7 @@ def printmap(graph, output):
     for callee in graph[caller]:
       print("\t" + callee, file=output)
 
+# Phase 1 - build callmap and reverse callmap
 for line in sys.stdin:
   splits = line.strip().split(" ")
   caller = splits[0]
@@ -124,25 +126,35 @@ output_file = open(sys.argv[1] + "/app.rcallmap", "w")
 printmap(rcallmap, output_file)
 output_file.close()
 
-# Look in rcallgraph for any key
-# TODO - do it for any allocation!
-target="gr.gousiosg.javacg.stat.MethodVisitor:prepareCall(org.apache.bcel.classfile.JavaClass,org.apache.bcel.generic.ReferenceType,org.apache.bcel.generic.InvokeInstruction)"
-#target="gr.gousiosg.javacg.stat.ClassVisitor:<init>(org.apache.bcel.classfile.JavaClass)"
-
-print("Looking into " + target)
-revers = reverseTraversal({}, [], target, sys.stdout, 1)
-print("Printing reversed map")
-printmap(revers, sys.stdout)
-print("Printing swaped reversed map")
-allocmap = swapmap(revers)
-printmap(allocmap, sys.stdout)
-print("Printing entry points for swapped reverse map")
+# Phase 2 - find decisive method calls for each method where allocations occur.
 result = []
-for entrypoint in entrypoints(allocmap):
-# TODO - check if I want to restrict.
-#  if not entrypoint.startswith("gr.gousiosg.javacg.stat.JCallGraph"):
-#    continue
-  print("entrypoint=" + entrypoint)
-  findDivergence(allocmap, result, [], entrypoint, sys.stdout)
+
+with open(sys.argv[1] + "/app.news", "r") as f:
+  for line in f:
+    target=line.strip()
+#   target="gr.gousiosg.javacg.stat.MethodVisitor:prepareCall(org.apache.bcel.classfile.JavaClass,org.apache.bcel.generic.ReferenceType,org.apache.bcel.generic.InvokeInstruction)"
+#   target="gr.gousiosg.javacg.stat.ClassVisitor:<init>(org.apache.bcel.classfile.JavaClass)"
+#   target="gr.gousiosg.javacg.stat.test.polymorphism.Test:run()"
+
+    print("Looking into " + target)
+    revers = reverseTraversal({}, [], target, sys.stdout, 1)
+
+# Debug
+#    print("Printing reversed map")
+#    printmap(revers, sys.stdout)
+
+    allocmap = swapmap(revers)
+
+# Debug   
+#    print("Printing swaped reversed map")
+#    printmap(allocmap, sys.stdout)
+
+    print("Printing entry points for swapped reverse map")
+    for entrypoint in entrypoints(allocmap):
+      if not entrypoint.startswith(sys.argv[2]):
+        continue
+      print("entrypoint=" + entrypoint)
+      findDivergence(allocmap, result, [], entrypoint, sys.stdout)
+
 for i in set(result):
   print("important=" + i)
