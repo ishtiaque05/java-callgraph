@@ -44,12 +44,10 @@ public class ClassVisitor extends EmptyVisitor {
 
     private JavaClass clazz;
     private ConstantPoolGen constants;
-    private String classReferenceFormat;
     
     public ClassVisitor(JavaClass jc) {
         clazz = jc;
         constants = new ConstantPoolGen(clazz.getConstantPool());
-        classReferenceFormat = "C:" + clazz.getClassName() + " %s";
         JCallGraph.addVisitedClass(jc);
     }
 
@@ -69,8 +67,6 @@ public class ClassVisitor extends EmptyVisitor {
                 String referencedClass = 
                     constantPool.constantToString(constant);
                 JCallGraph.addReferencedClass(referencedClass);
-                System.out.println(String.format(classReferenceFormat,
-                        referencedClass));
             }
         }
     }

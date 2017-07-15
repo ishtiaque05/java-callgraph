@@ -47,6 +47,12 @@ public class MethodCall {
         return getCallSignature(inst.getReferenceType(cp).toString());
     }
     
+    public String getJavaCallSignature() {
+        return String.format("%s(%s)",
+                inst.getMethodName(cp),
+                argumentList(inst.getArgumentTypes(cp)));
+    }
+    
     public String getCallSignature(String refType) {
         return String.format("M:%s:%s(%s)#%d [X] %s:%s(%s)",
                 jc.getClassName(),

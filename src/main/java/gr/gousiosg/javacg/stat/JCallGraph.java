@@ -58,7 +58,7 @@ public class JCallGraph {
     // TODO - could this go away? We have calls, it should be enough.
     public static Set<String> referencedClasses  = new HashSet<>();
 
-    // <caller, <callee, <method signature>>>
+    // <caller, <callee, <method call>>>
     public static Map<String, Map<String, List<MethodCall>>> calls = new HashMap<>();
 
     public static void addVisitedClass(JavaClass jc) {
@@ -121,16 +121,27 @@ public class JCallGraph {
         }
     }
 
-    public static boolean containsMethod(Class clazz, String method) {
+    /**
+     * Returns true if 'clazz' contains a method declaration that matches the
+     * provided 'signature'. Signature is method(args).
+     * @param clazz
+     * @param signature
+     * @return 
+     */
+    public static boolean containsMethod(Class clazz, String signature) {
         for (Method m : clazz.getDeclaredMethods()) {
-            // TODO - check for signatures!
-            if (m.getName().equals(method)) {
+            if (m.toString().contains(signature)) {
                 return true;
             }
         }
         return false;
     }
 
+    /**
+     * Returns true if 'type' is primitive.
+     * @param type
+     * @return 
+     */
     public static boolean isPrimitive(String type) {
         switch(type) {
             case "byte":
@@ -152,15 +163,18 @@ public class JCallGraph {
             processFile(new File(arg));
         }
 
+        // Prints warning for all referenced but not visited classes.
         for (String calledClass : referencedClasses) {
             if (!visitedClasses.contains(calledClass)) {
                 System.out.println("Warning: called class not found: " + calledClass);
             }
         }
 
+        // Deals with polymorphism.
+        // For each caller
         for (Entry<String, Map<String, List<MethodCall>>> call : calls.entrySet()) {
-            Map<String, List<MethodCall>> callee = call.getValue();
-            for (Entry<String, List<MethodCall>> reference : callee.entrySet()) {
+            // For each callee
+            for (Entry<String, List<MethodCall>> reference : call.getValue().entrySet()) {
                 for (String visited : visitedClasses) {
                     try {
                         String refType = reference.getKey().replace("[]", "");
@@ -176,8 +190,9 @@ public class JCallGraph {
                         Class visitedClass = Class.forName(visited);
                         Class calledClass = Class.forName(refType);
                         if (calledClass.isAssignableFrom(visitedClass)) {
+                            // For each called method
                             for (MethodCall methodCall : reference.getValue()) {
-                                if (containsMethod(visitedClass, methodCall.getMethodName())) {
+                                if (containsMethod(visitedClass, methodCall.getJavaCallSignature())) {
                                     System.out.println(methodCall.getCallSignature(visited));
                                 }
                             }
