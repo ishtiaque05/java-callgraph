@@ -147,10 +147,4 @@ public class MethodVisitor extends EmptyVisitor {
         System.out.println(String.format(callformat,bci,"S",i.getReferenceType(cp),i.getMethodName(cp),argumentList(i.getArgumentTypes(cp))));
     }
 
-    @Override
-    public void visitINVOKEDYNAMIC(INVOKEDYNAMIC i) {
-        prepareCall(visitedClass, i.getReferenceType(cp), i);
-        System.out.println(String.format(callformat,bci,"D",i.getType(cp),i.getMethodName(cp),
-                argumentList(i.getArgumentTypes(cp))));
-    }
 }

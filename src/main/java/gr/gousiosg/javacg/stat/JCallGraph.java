@@ -159,7 +159,7 @@ public class JCallGraph {
     }
 
     public static void main(String[] args) {
-        for (String arg : args) {
+        for (String arg : args[0].split(":")) {
             processFile(new File(arg));
         }
 
