@@ -9,30 +9,32 @@ callmap = {}
 
 # Dictionary of callee -> caller
 # caller := <class>:<method>(<args>):<bci>
-# calle := <class>:<method>(<args>):[<bci>]
+# calle := <class>:<method>(<args>)
 rcallmap = {}
 
-# Target is <class>:<method>(<args>)
+# This method returns the inverse call graph that led to a callee.
+# Target/calee is <class>:<method>(<args>)
 def reverseTraversal(result, stack, callee, output, depth):
-  callers = [] if callee not in rcallmap else rcallmap[callee]
-  stripped_callers = []
   if callee not in result:
     result[callee] = []
+
+  callers = [] if callee not in rcallmap else rcallmap[callee]
   for caller in callers:
-    if caller in stack:
-      continue
-# Debug
-#    print("d=" + str(depth) + "\t", file=output, end="")
-#    for i in range(0, depth): print(" ", end="", file=output)
-#    print(caller, file=output)
     if caller not in result[callee]:
       result[callee].append(caller)
-    stack.append(caller)
+
     striped = caller.split("#")[0]
-    if striped not in stripped_callers:
-      stripped_callers.append(striped)
-      reverseTraversal(result, stack, striped, output, depth + 1)
-    stack.pop()
+
+    if striped in stack:
+      continue
+    stack.append(striped)
+
+    # Debug
+    print("d=" + str(depth) + "\t", file=output, end="")
+    for i in range(0, depth): print(" ", end="", file=output)
+    print(caller, file=output)
+
+    reverseTraversal(result, stack, striped, output, depth + 1)
   return result
 
 # Target is <class>:<method>(<args>). Reult is list of <class>:<method>(<args>)#<bci>
@@ -63,7 +65,6 @@ def findDivergence(imap, result, stack, target, output):
       else:
         stack.append(caller)
         findDivergence(imap, result, stack, caller, output)
-        stack.pop() 
 
 def buildcallmap(caller, callee):
   if caller not in callmap:
@@ -132,9 +133,6 @@ result = []
 with open(sys.argv[1] + "/app.news", "r") as f:
   for line in f:
     target=line.strip()
-#   target="gr.gousiosg.javacg.stat.MethodVisitor:prepareCall(org.apache.bcel.classfile.JavaClass,org.apache.bcel.generic.ReferenceType,org.apache.bcel.generic.InvokeInstruction)"
-#   target="gr.gousiosg.javacg.stat.ClassVisitor:<init>(org.apache.bcel.classfile.JavaClass)"
-#   target="gr.gousiosg.javacg.stat.test.polymorphism.Test:run()"
 
     print("Looking into " + target)
     revers = reverseTraversal({}, [], target, sys.stdout, 1)
@@ -153,8 +151,9 @@ with open(sys.argv[1] + "/app.news", "r") as f:
     for entrypoint in entrypoints(allocmap):
       if not entrypoint.startswith(sys.argv[2]):
         continue
-      print("entrypoint=" + entrypoint)
+      print("\tentrypoint=" + entrypoint)
       findDivergence(allocmap, result, [], entrypoint, sys.stdout)
 
+print("Printing important frames")
 for i in set(result):
   print("important=" + i)
