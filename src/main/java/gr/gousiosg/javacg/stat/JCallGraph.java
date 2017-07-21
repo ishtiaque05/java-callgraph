@@ -198,11 +198,12 @@ public class JCallGraph {
                             }
                         }
 
-                    } catch (Exception e) {
+                    } catch (Throwable e) {
                         e.printStackTrace();
                     }
                 }
             }
         }
+        System.out.println("Finished.");
     }
 }

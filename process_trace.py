@@ -12,9 +12,14 @@ callmap = {}
 # calle := <class>:<method>(<args>)
 rcallmap = {}
 
+static_max_frame = 5
+
 # This method returns the inverse call graph that led to a callee.
 # Target/calee is <class>:<method>(<args>)
-def reverseTraversal(result, stack, callee, output, depth):
+def reverseTraversal(result, frames, callee, output, depth):
+  if depth > static_max_frame:
+    return
+
   if callee not in result:
     result[callee] = []
 
@@ -22,20 +27,23 @@ def reverseTraversal(result, stack, callee, output, depth):
   for caller in callers:
     if caller not in result[callee]:
       result[callee].append(caller)
+    # TODO - should we continue in the else case?
+
+    if caller not in frames[depth]:
+      frames[depth].append(caller)
+    else:
+      continue
+
 
     striped = caller.split("#")[0]
 
-    if striped in stack:
-      continue
-    stack.append(striped)
+# Debug
+#    print("d=" + str(depth) + "\t", file=output, end="")
+#    for i in range(0, depth): print(" ", end="", file=output)
+#    print(caller, file=output)
 
-    # Debug
-    print("d=" + str(depth) + "\t", file=output, end="")
-    for i in range(0, depth): print(" ", end="", file=output)
-    print(caller, file=output)
-
-    reverseTraversal(result, stack, striped, output, depth + 1)
-  return result
+    reverseTraversal(result, frames, striped, output, depth + 1)
+  return
 
 # Target is <class>:<method>(<args>). Reult is list of <class>:<method>(<args>)#<bci>
 def findCallers(imap, target):
@@ -135,25 +143,33 @@ with open(sys.argv[1] + "/app.news", "r") as f:
     target=line.strip()
 
     print("Looking into " + target)
-    revers = reverseTraversal({}, [], target, sys.stdout, 1)
+    revers = {}
+    frames = [ [] for i in range(0, static_max_frame + 1)] 
+    reverseTraversal(revers, frames, target, sys.stdout, 1)
 
 # Debug
 #    print("Printing reversed map")
 #    printmap(revers, sys.stdout)
-
+    for frame in frames:
+      print("Frame with " + str(len(frame)) + " elements")
+'''
+    # TODO - need? Don't think so...
     allocmap = swapmap(revers)
 
 # Debug   
 #    print("Printing swaped reversed map")
 #    printmap(allocmap, sys.stdout)
 
+    # TODO - remove the idea of entry points, we use 25 frames now.
     print("Printing entry points for swapped reverse map")
     for entrypoint in entrypoints(allocmap):
       if not entrypoint.startswith(sys.argv[2]):
         continue
       print("\tentrypoint=" + entrypoint)
+      # TODO - start from the bottom.
       findDivergence(allocmap, result, [], entrypoint, sys.stdout)
 
 print("Printing important frames")
 for i in set(result):
   print("important=" + i)
+'''
