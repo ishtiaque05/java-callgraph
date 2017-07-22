@@ -12,7 +12,21 @@ callmap = {}
 # calle := <class>:<method>(<args>)
 rcallmap = {}
 
-static_max_frame = 5
+static_max_frame = 40
+
+
+# TODO - new solution: give each method call a hash (16 bits)
+# TODO - maintain a 32 bit context register for each thread
+#       - each time we go through a method call, add the hash.
+#       - each time we return from a method call, subtract the hash.
+#       - context (32 bits) = 16 bit acc + 16 bit method+bci
+# TODO - static analyzer (python):
+#       - removes methods calls that do not lead to allocations
+#       - removes methods calls that are not decisive
+#       - limit methods calls to a number of frames from an allocation site.
+# TODO - statuc analyzer (java):
+#       - gives each method call a unique hash (supports polymorphism) (16 bit)
+#       - gives each allocatiohn site hash (16 bit)
 
 # This method returns the inverse call graph that led to a callee.
 # Target/calee is <class>:<method>(<args>)
@@ -25,15 +39,20 @@ def reverseTraversal(result, frames, callee, output, depth):
 
   callers = [] if callee not in rcallmap else rcallmap[callee]
   for caller in callers:
+    if caller.startswith(sys.argv[2]):
+      print("Found " + str(sys.argv[2]) + " at depth = " + str(depth))
+#      printframes(frames, sys.stdout)
+#      exit()
+
     if caller not in result[callee]:
       result[callee].append(caller)
-    # TODO - should we continue in the else case?
+    else:
+      continue
 
     if caller not in frames[depth]:
       frames[depth].append(caller)
     else:
       continue
-
 
     striped = caller.split("#")[0]
 
@@ -106,6 +125,13 @@ def swapmap(imap):
       if caller not in result[callee]:
         result[callee].append(caller)
   return result
+
+def printframes(frames, output):
+  i = 0
+  for frame in frames:
+    print ("Frame " + str(i))
+    for elem in frame:
+      print("\t" + elem)
 
 def printmap(graph, output):
   for caller in graph:
