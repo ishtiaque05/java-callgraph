@@ -18,9 +18,9 @@ import org.apache.bcel.generic.ReferenceType;
  */
 public class MethodCall {
     // Class where the call is performed (caller)
-    private JavaClass jc;
+    private JavaClass caller;
     // Reference type used to call.
-    private ReferenceType refType;
+    private ReferenceType callee;
     // Bytecode level instruction used to call.
     InvokeInstruction inst;
     // Constant pool of the class where the call is performed.
@@ -30,15 +30,21 @@ public class MethodCall {
     // Byte code index of this call.
     int bci;
     
-    public MethodCall(JavaClass jc, ReferenceType refType, InvokeInstruction inst, ConstantPoolGen cp, MethodGen mg, int bci) {
-        this.jc = jc;
-        this.refType = refType;
+    public MethodCall(
+            JavaClass jc, 
+            ReferenceType refType, 
+            InvokeInstruction inst, 
+            ConstantPoolGen cp, 
+            MethodGen mg, 
+            int bci) {
+        this.caller = jc;
+        this.callee = refType;
         this.inst = inst;
         this.cp = cp;
         this.mg = mg;
         this.bci = bci;
     }
-    
+
     public String getMethodName() {
         return inst.getMethodName(cp);
     }
@@ -55,7 +61,7 @@ public class MethodCall {
     
     public String getCallSignature(String refType) {
         return String.format("M:%s:%s(%s)#%d [X] %s:%s(%s)",
-                jc.getClassName(),
+                caller.getClassName(),
                 mg.getName(),
                 MethodVisitor.argumentList(mg.getArgumentTypes()),
                 bci,

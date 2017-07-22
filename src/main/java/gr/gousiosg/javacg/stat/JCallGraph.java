@@ -58,8 +58,63 @@ public class JCallGraph {
     // TODO - could this go away? We have calls, it should be enough.
     public static Set<String> referencedClasses  = new HashSet<>();
 
-    // <caller, <callee, <method call>>>
-    public static Map<String, Map<String, List<MethodCall>>> calls = new HashMap<>();
+    // Maps of id to caller method (class+method) and alloc (class+method+bci)
+    public static Map<String, Short> caller2ID = new HashMap<>();
+    public static Map<Short, String> ID2caller = new HashMap<>();
+    public static Map<String, Short> alloc2ID = new HashMap<>();
+    public static Map<Short, String> ID2alloc = new HashMap<>();
+
+    // <caller class, <callee class, <method call>>>
+    public static Map<String, Map<String, List<MethodCall>>> polimorphicCalls = new HashMap<>();
+
+    private static short hashString(String s, short seed) {
+        short hash = seed;
+        for (int i = 0; i < s.length(); i++) {
+            hash = (short) (hash*3 + s.charAt(i));
+        }
+        return hash;
+    }
+    private static short hashIntoMap(Map<Short,String> map, String value) {
+        short seed = 1;
+        while (true) {
+            short hash = hashString(value, seed);
+            if (!map.containsKey(hash)) {
+                map.put(hash, value);
+                return hash;
+            }
+            seed += 1;
+        }
+    }
+
+    /**
+     * TODO - document!
+     * @param callerClass
+     * @param callerMethod
+     */
+    public static void addCaller(String callerClass, String callerMethod) {
+        String value = callerClass + ":" + callerMethod;
+
+        // What if the number of caller methods exceeds 64k?
+        if (!caller2ID.containsKey(value)) {
+            short hash = hashIntoMap(ID2caller, callerClass + callerMethod);
+            caller2ID.put(value, hash);
+        }
+    }
+
+    /**
+     * TODO - document!
+     * @param callerClass
+     * @param callerMethod
+     * @param bci
+     */
+    public static void addAlloc(String callerClass, String callerMethod, int bci) {
+        String value = callerClass + ":" + callerMethod + "#" + bci;
+
+        if (!alloc2ID.containsKey(value)) {
+            short hash = hashIntoMap(ID2alloc, callerClass + callerMethod);
+            alloc2ID.put(value, hash);
+        }
+    }
 
     public static void addVisitedClass(JavaClass jc) {
         if (!visitedClasses.contains(jc.getClassName())) {
@@ -171,9 +226,9 @@ public class JCallGraph {
         }
 
         // Deals with polymorphism.
-        // For each caller
-        for (Entry<String, Map<String, List<MethodCall>>> call : calls.entrySet()) {
-            // For each callee
+        // For each caller class
+        for (Entry<String, Map<String, List<MethodCall>>> call : polimorphicCalls.entrySet()) {
+            // For each callee class
             for (Entry<String, List<MethodCall>> reference : call.getValue().entrySet()) {
                 for (String visited : visitedClasses) {
                     try {
@@ -203,6 +258,14 @@ public class JCallGraph {
                     }
                 }
             }
+        }
+
+        // Printing caller method IDs
+        for (Entry<Short, String> entry : ID2caller.entrySet()) {
+            System.out.println(String.format("MID:%d %s", entry.getKey(), entry.getValue()));
+        }
+        for (Entry<Short, String> entry : ID2alloc.entrySet()) {
+            System.out.println(String.format("NID:%d %s", entry.getKey(), entry.getValue()));
         }
         System.out.println("Finished.");
     }
