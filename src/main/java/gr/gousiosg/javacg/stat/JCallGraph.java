@@ -92,11 +92,11 @@ public class JCallGraph {
      * @param callerMethod
      */
     public static void addCaller(String callerClass, String callerMethod) {
-        String value = callerClass + ":" + callerMethod;
+        String value = callerClass + "." + callerMethod;
 
         // What if the number of caller methods exceeds 64k?
         if (!caller2ID.containsKey(value)) {
-            short hash = hashIntoMap(ID2caller, callerClass + callerMethod);
+            short hash = hashIntoMap(ID2caller, value);
             caller2ID.put(value, hash);
         }
     }
@@ -108,10 +108,11 @@ public class JCallGraph {
      * @param bci
      */
     public static void addAlloc(String callerClass, String callerMethod, int bci) {
-        String value = callerClass + ":" + callerMethod + "#" + bci;
+        String value = callerClass + "." + callerMethod + ":" + bci;
 
+        // What if the number of caller methods exceeds 64k?
         if (!alloc2ID.containsKey(value)) {
-            short hash = hashIntoMap(ID2alloc, callerClass + callerMethod);
+            short hash = hashIntoMap(ID2alloc, value);
             alloc2ID.put(value, hash);
         }
     }
@@ -262,10 +263,10 @@ public class JCallGraph {
 
         // Printing caller method IDs
         for (Entry<Short, String> entry : ID2caller.entrySet()) {
-            System.out.println(String.format("MID:%d %s", entry.getKey(), entry.getValue()));
+            System.out.println(String.format("MID:%d:%s", entry.getKey(), entry.getValue()));
         }
         for (Entry<Short, String> entry : ID2alloc.entrySet()) {
-            System.out.println(String.format("NID:%d %s", entry.getKey(), entry.getValue()));
+            System.out.println(String.format("NID:%d:%s", entry.getKey(), entry.getValue()));
         }
         System.out.println("Finished.");
     }

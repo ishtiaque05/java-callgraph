@@ -9,10 +9,11 @@ function run_python {
 function run_java {
   main="gr.gousiosg.javacg.stat.JCallGraph"
   echo "Launching java..."
-  java -cp $classpath $main $target &> $output_folder/app.log 
+  time java -cp $classpath $main $target &> $output_folder/app.log
   echo "Launching java...Done"
 
   cat app.log | grep "^N:" | sed 's/^N://g' |  awk -F'#' '{print $1}' | sort | uniq &> $output_folder/app.news
+  cat app.log | grep -e "^NID:" -e "^MID:" | sort &> $output_folder/app.ids
   echo "Number of allocation methods = `cat $output_folder/app.news | wc -l`"
   echo "Number of allocation sites = `cat $output_folder/app.log | grep \"^NID:\" | wc -l`"
   echo "Number of caller methods = `cat $output_folder/app.log | grep \"^MID:\" | wc -l`"
