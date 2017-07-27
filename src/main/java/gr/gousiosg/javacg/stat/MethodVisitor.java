@@ -116,40 +116,40 @@ public class MethodVisitor extends EmptyVisitor {
     @Override
     public void visitNEW(NEW o) {
         System.out.println(String.format(allocformat, "N", bci));
-        JCallGraph.addAlloc(visitedClass.getClassName(), mg.getName() + "(" + argumentList(mg.getArgumentTypes()) + ")", bci);
+        JCallGraph.addAlloc(visitedClass.getClassName(), mg.getName() + mg.getSignature(), bci);
     }
 
     @Override
     public void visitNEWARRAY(NEWARRAY obj) {
         System.out.println(String.format(allocformat, "N", bci));
-        JCallGraph.addAlloc(visitedClass.getClassName(), mg.getName() + "(" + argumentList(mg.getArgumentTypes()) + ")", bci);
+        JCallGraph.addAlloc(visitedClass.getClassName(), mg.getName() + mg.getSignature(), bci);
     }
 
     @Override
     public void visitINVOKEVIRTUAL(INVOKEVIRTUAL i) {
         preparePolimorphicCall(visitedClass, i.getReferenceType(cp), i);
-        JCallGraph.addCaller(visitedClass.getClassName(), mg.getName() + "(" + argumentList(mg.getArgumentTypes()) + ")");
+        JCallGraph.addCaller(visitedClass.getClassName(), mg.getName() + mg.getSignature());
         System.out.println(String.format(callformat,bci,"M",i.getReferenceType(cp),i.getMethodName(cp),argumentList(i.getArgumentTypes(cp))));
     }
 
     @Override
     public void visitINVOKEINTERFACE(INVOKEINTERFACE i) {
         preparePolimorphicCall(visitedClass, i.getReferenceType(cp), i);
-        JCallGraph.addCaller(visitedClass.getClassName(), mg.getName() + "(" + argumentList(mg.getArgumentTypes()) + ")");
+        JCallGraph.addCaller(visitedClass.getClassName(), mg.getName() + mg.getSignature());
         // Note: I don't print it because this is not a real call.
     }
 
     @Override
     public void visitINVOKESPECIAL(INVOKESPECIAL i) {
         // Note: I don't need to handle these calls. They are always resolved at compile time.
-        JCallGraph.addCaller(visitedClass.getClassName(), mg.getName() + "(" + argumentList(mg.getArgumentTypes()) + ")");
+        JCallGraph.addCaller(visitedClass.getClassName(), mg.getName() + mg.getSignature());
         System.out.println(String.format(callformat,bci,"O",i.getReferenceType(cp),i.getMethodName(cp),argumentList(i.getArgumentTypes(cp))));
     }
 
     @Override
     public void visitINVOKESTATIC(INVOKESTATIC i) {
         preparePolimorphicCall(visitedClass, i.getReferenceType(cp), i);
-        JCallGraph.addCaller(visitedClass.getClassName(), mg.getName() + "(" + argumentList(mg.getArgumentTypes()) + ")");
+        JCallGraph.addCaller(visitedClass.getClassName(), mg.getName() + mg.getSignature());
         System.out.println(String.format(callformat,bci,"S",i.getReferenceType(cp),i.getMethodName(cp),argumentList(i.getArgumentTypes(cp))));
     }
 
