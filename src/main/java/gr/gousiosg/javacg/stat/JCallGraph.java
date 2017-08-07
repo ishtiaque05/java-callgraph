@@ -263,10 +263,10 @@ public class JCallGraph {
 
         // Printing caller method IDs
         for (Entry<Short, String> entry : ID2caller.entrySet()) {
-            System.out.println(String.format("MID:%d:%s", entry.getKey(), entry.getValue()));
+            System.out.println(String.format("MID:%04x:%s", Short.toUnsignedInt(entry.getKey()), entry.getValue()));
         }
         for (Entry<Short, String> entry : ID2alloc.entrySet()) {
-            System.out.println(String.format("NID:%d:%s", entry.getKey(), entry.getValue()));
+            System.out.println(String.format("NID:%04x:%s", Short.toUnsignedInt(entry.getKey()), entry.getValue()));
         }
         System.out.println("Finished.");
     }
