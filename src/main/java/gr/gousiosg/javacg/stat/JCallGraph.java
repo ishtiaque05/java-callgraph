@@ -30,11 +30,9 @@ package gr.gousiosg.javacg.stat;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -64,9 +62,6 @@ public class JCallGraph {
     public static Map<String, Short> alloc2ID = new HashMap<>();
     public static Map<Short, String> ID2alloc = new HashMap<>();
 
-    // <caller class, <callee class, <method call>>>
-    public static Map<String, Map<String, List<MethodCall>>> polimorphicCalls = new HashMap<>();
-
     private static short hashString(String s, short seed) {
         short hash = seed;
         for (int i = 0; i < s.length(); i++) {
@@ -91,8 +86,8 @@ public class JCallGraph {
      * @param callerClass
      * @param callerMethod
      */
-    public static void addCaller(String callerClass, String callerMethod) {
-        String value = callerClass + "." + callerMethod;
+    public static void addCaller(String callerClass, String callerMethod, int bci) {
+        String value = callerClass + "." + callerMethod + ":" + bci;
 
         // What if the number of caller methods exceeds 64k?
         if (!caller2ID.containsKey(value)) {
@@ -177,43 +172,6 @@ public class JCallGraph {
         }
     }
 
-    /**
-     * Returns true if 'clazz' contains a method declaration that matches the
-     * provided 'signature'. Signature is method(args).
-     * @param clazz
-     * @param signature
-     * @return 
-     */
-    public static boolean containsMethod(Class clazz, String signature) {
-        for (Method m : clazz.getDeclaredMethods()) {
-            if (m.toString().contains(signature)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Returns true if 'type' is primitive.
-     * @param type
-     * @return 
-     */
-    public static boolean isPrimitive(String type) {
-        switch(type) {
-            case "byte":
-            case "short":
-            case "int":
-            case "long":
-            case "float":
-            case "double":
-            case "boolean":
-            case "char":
-                return true;
-            default:
-                return false;
-        }
-    }
-
     public static void main(String[] args) {
         for (String arg : args[0].split(":")) {
             processFile(new File(arg));
@@ -223,41 +181,6 @@ public class JCallGraph {
         for (String calledClass : referencedClasses) {
             if (!visitedClasses.contains(calledClass)) {
                 System.out.println("Warning: called class not found: " + calledClass);
-            }
-        }
-
-        // Deals with polymorphism.
-        // For each caller class
-        for (Entry<String, Map<String, List<MethodCall>>> call : polimorphicCalls.entrySet()) {
-            // For each callee class
-            for (Entry<String, List<MethodCall>> reference : call.getValue().entrySet()) {
-                for (String visited : visitedClasses) {
-                    try {
-                        String refType = reference.getKey().replace("[]", "");
-
-                        if (isPrimitive(refType)) {
-                            continue;
-                        }
-
-                        if (refType.equals(visited)) {
-                            continue;
-                        }
-
-                        Class visitedClass = Class.forName(visited);
-                        Class calledClass = Class.forName(refType);
-                        if (calledClass.isAssignableFrom(visitedClass)) {
-                            // For each called method
-                            for (MethodCall methodCall : reference.getValue()) {
-                                if (containsMethod(visitedClass, methodCall.getJavaCallSignature())) {
-                                    System.out.println(methodCall.getCallSignature(visited));
-                                }
-                            }
-                        }
-
-                    } catch (Throwable e) {
-                        e.printStackTrace();
-                    }
-                }
             }
         }
 
